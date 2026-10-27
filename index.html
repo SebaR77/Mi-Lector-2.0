@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Mi Lector</title>
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -566,13 +566,36 @@ body {background:radial-gradient(ellipse 85% 35% at 50% 7%,rgba(173,132,79,.11),
 .tab-bar-floating.is-collapsed .tab-btn:not(.active) {display:none;}
 .tab-bar-floating.is-collapsed .tab-btn.active {flex:1;}
 .tab-bar-floating.is-collapsed .tab-btn.active span {display:none;}
-.tab-bar-floating .pixel-icon svg {display:none;}
-.tab-bar-floating .tab-btn:nth-child(1) .pixel-icon:before {content:'▤';}
-.tab-bar-floating .tab-btn:nth-child(2) .pixel-icon:before {content:'☷';}
-.tab-bar-floating .tab-btn:nth-child(3) .pixel-icon:before {content:'▥';}
-.tab-bar-floating .pixel-icon:before {font-size:23px;line-height:1;color:currentColor;font-weight:400;}
+.tab-bar-floating .pixel-icon svg {display:block;}
 .modal-content {border-color:rgba(255,255,255,.10);background:#202126;}
 @media (prefers-reduced-motion:reduce) {.tab-bar-floating,.tab-bar-floating .tab-btn,.btn {transition:none!important;}}
+
+
+/* MI LECTOR 2.2 — diseño ambiental y cristal */
+:root {--ambient-rgb:112,83,127;--ambient-secondary:61,80,110;--glass-edge:rgba(255,255,255,.19);}
+html {background:#0d0e13;}
+body {background:#0d0e13;isolation:isolate;padding-top:calc(var(--safe-top) + 22px);}
+body::before {content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse 105% 53% at 51% 14%,rgba(var(--ambient-rgb),.40),transparent 73%),radial-gradient(ellipse 75% 45% at 100% 65%,rgba(var(--ambient-secondary),.19),transparent 85%),#0d0e13;transition:background 1.1s ease;}
+.card {background:linear-gradient(150deg,rgba(255,255,255,.075),rgba(255,255,255,.022) 55%),rgba(25,26,34,.72);border:1px solid rgba(255,255,255,.105);box-shadow:inset 0 1px 0 rgba(255,255,255,.075),0 14px 36px rgba(0,0,0,.22);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);}
+#active-book-container {background:radial-gradient(ellipse 85% 90% at 5% 15%,rgba(var(--ambient-rgb),.29),transparent 86%),linear-gradient(140deg,rgba(55,55,68,.78),rgba(20,21,29,.89));border:1px solid rgba(255,255,255,.17);box-shadow:0 18px 50px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.14);}
+#active-book-container:before {background:radial-gradient(circle,rgba(var(--ambient-rgb),.29),transparent 72%);}
+.cover-box {cursor:pointer;position:relative;box-shadow:0 16px 35px rgba(0,0,0,.45),0 0 35px rgba(var(--ambient-rgb),.16);transition:transform .35s ease,box-shadow .35s ease;}
+.cover-box:active {transform:scale(.96);}
+#book-cover-box:after {content:'✎';position:absolute;bottom:6px;right:6px;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:rgba(20,20,25,.65);color:#fff;font-size:12px;backdrop-filter:blur(9px);border:1px solid rgba(255,255,255,.24);}
+.reader-bookmark {background:linear-gradient(120deg,rgba(231,197,141,.13),rgba(255,255,255,.025));box-shadow:inset 0 1px rgba(255,255,255,.055);}
+.timer-box {display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:20px 18px;background:rgba(25,26,34,.50);}
+.timer-label {font-size:.68rem;color:var(--text-muted);letter-spacing:.15em;font-weight:650;}
+.timer-display {font-size:2.25rem!important;font-weight:450!important;line-height:1.2;letter-spacing:-.045em;color:#f3e9df;}
+.timer-actions {width:100%;justify-content:center;}
+.timer-actions .btn {min-width:125px;}
+body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);box-shadow:0 0 32px rgba(var(--ambient-rgb),.10),inset 0 1px rgba(255,255,255,.10);}
+.tab-bar-floating {background:linear-gradient(155deg,rgba(255,255,255,.17),rgba(255,255,255,.035) 60%),rgba(32,33,43,.67);border:1px solid rgba(255,255,255,.26);box-shadow:inset 0 1px rgba(255,255,255,.21),0 14px 45px rgba(0,0,0,.42);-webkit-backdrop-filter:blur(34px) saturate(1.5);backdrop-filter:blur(34px) saturate(1.5);transition:width .85s cubic-bezier(.22,1,.36,1),padding .85s cubic-bezier(.22,1,.36,1),background .45s ease;}
+.tab-bar-floating .tab-btn {transition:opacity .55s ease,transform .55s ease,flex .75s ease;}
+.tab-bar-floating.is-collapsed {width:66px;}
+.tab-bar-floating .pixel-icon svg {image-rendering:pixelated;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3));}
+.tab-bar-floating .tab-btn:not(.active) .pixel-icon svg {opacity:.72;filter:saturate(.8);}
+.modal-content {background:linear-gradient(145deg,rgba(53,54,67,.96),rgba(25,26,35,.98));border:1px solid rgba(255,255,255,.20);box-shadow:0 24px 70px rgba(0,0,0,.50);}
+@media(prefers-reduced-motion:reduce){body::before,.cover-box,.tab-bar-floating{transition:none!important;}}
 
   </style>
 </head>
@@ -605,7 +628,6 @@ body {background:radial-gradient(ellipse 85% 35% at 50% 7%,rgba(173,132,79,.11),
           <p id="book-author">...</p>
           <div class="streak-badge" id="streak-indicator">🔥 0 días seguidos</div>
           <div style="margin-top: 10px; display: flex; gap: 8px;">
-            <button class="btn btn-secondary btn-sm" onclick="openCoverChanger('active')">🖼️ Portada</button>
             <button class="btn btn-secondary btn-sm" onclick="openFinishBookModal()">🏁 Terminar</button>
           </div>
         </div>
@@ -625,7 +647,7 @@ body {background:radial-gradient(ellipse 85% 35% at 50% 7%,rgba(173,132,79,.11),
 
     <!-- CRONÓMETRO -->
     <div class="card timer-box">
-      <div style="font-size: 0.78rem; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 4px;">TIEMPO DE SESIÓN</div>
+      <div class="timer-label">TIEMPO DE LECTURA</div>
       <div class="timer-display" id="timer-display">00:00</div>
       <div class="timer-actions">
         <button class="btn btn-gold" id="btn-timer-start" onclick="toggleTimer()">Iniciar Lectura</button>
@@ -945,19 +967,14 @@ body {background:radial-gradient(ellipse 85% 35% at 50% 7%,rgba(173,132,79,.11),
     <div class="modal-content">
       <h3>Actualizar Portada 🖼️</h3>
       <p style="font-size: 0.82rem; color: var(--text-muted); margin: 6px 0 14px;">
-        Sube la foto de tu ejemplar real o pega un enlace de internet.
+        Elige una imagen de tu celular para personalizar tu libro.
       </p>
       <div class="form-group">
-        <label>Opción 1: Foto o Archivo de tu celular</label>
+        <label>Elegir fotografía</label>
         <input type="file" id="cover-file-input" accept="image/*" class="form-control" onchange="handleCoverFileSelected(event)">
-      </div>
-      <div class="form-group">
-        <label>Opción 2: Pegar enlace (URL) de internet</label>
-        <input type="url" id="cover-url-input" class="form-control" placeholder="https://ejemplo.com/portada.jpg">
       </div>
       <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-cover-changer')">Cancelar</button>
-        <button class="btn btn-gold btn-sm" onclick="saveCoverFromUrl()">Aplicar Link</button>
       </div>
     </div>
   </div>
@@ -971,7 +988,7 @@ body {background:radial-gradient(ellipse 85% 35% at 50% 7%,rgba(173,132,79,.11),
           <h3 id="detail-title" style="margin-bottom: 4px; font-size: 1.05rem;">Título</h3>
           <p id="detail-author" style="font-size: 0.85rem; color: var(--text-muted);">Autor</p>
           <div id="detail-rating-display" style="color: var(--gold); font-size: 0.9rem; font-weight: 700; margin-top: 4px;"></div>
-          <button class="btn btn-secondary btn-sm" style="margin-top: 8px;" onclick="openCoverChanger('detail')">📸 Cambiar Foto</button>
+
         </div>
       </div>
 
@@ -1211,6 +1228,7 @@ body {background:radial-gradient(ellipse 85% 35% at 50% 7%,rgba(173,132,79,.11),
       if (!b) {
         noBanner.style.display = 'block';
         card.style.display = 'none';
+        updateCoverAmbience(null);
         return;
       }
 
@@ -1233,13 +1251,13 @@ body {background:radial-gradient(ellipse 85% 35% at 50% 7%,rgba(173,132,79,.11),
         coverBox.innerHTML = `<span class="cover-placeholder">Sin Portada</span>`;
       }
 
+      updateCoverAmbience(b.cover);
       calculateMetrics();
     }
 
     function openCoverChanger(target) {
       coverChangeTarget = target;
       document.getElementById('cover-file-input').value = '';
-      document.getElementById('cover-url-input').value = '';
       openModal('modal-cover-changer');
     }
 
@@ -1265,12 +1283,6 @@ body {background:radial-gradient(ellipse 85% 35% at 50% 7%,rgba(173,132,79,.11),
       reader.readAsDataURL(file);
     }
 
-    function saveCoverFromUrl() {
-      const url = document.getElementById('cover-url-input').value.trim();
-      if (!url) return;
-      applyNewCover(url);
-    }
-
     function applyNewCover(imgSrc) {
       if (coverChangeTarget === 'active' && appState.activeBook) {
         appState.activeBook.cover = imgSrc;
@@ -1286,6 +1298,7 @@ body {background:radial-gradient(ellipse 85% 35% at 50% 7%,rgba(173,132,79,.11),
       }
       saveState();
       closeModal('modal-cover-changer');
+      updateCoverAmbience(appState.activeBook?.cover);
     }
 
     function getElapsedMs() {
@@ -1339,6 +1352,7 @@ body {background:radial-gradient(ellipse 85% 35% at 50% 7%,rgba(173,132,79,.11),
         document.getElementById('btn-timer-finish').style.display = 'inline-flex';
       }
       saveState();
+      document.body.classList.toggle('reading-in-progress', appState.timerState.isRunning);
     }
 
     function openEndSessionModal() {
@@ -2303,6 +2317,45 @@ body {background:radial-gradient(ellipse 85% 35% at 50% 7%,rgba(173,132,79,.11),
       },true);
       scheduleNavCollapse();
     });
+</script>
+
+<script>
+// Color de la portada: análisis local de imágenes seleccionadas y portadas con CORS habilitado.
+let ambienceRequest = 0;
+function updateCoverAmbience(source) {
+  const ticket = ++ambienceRequest;
+  const root = document.documentElement;
+  function setColors(primary, secondary) {
+    if (ticket !== ambienceRequest) return;
+    root.style.setProperty('--ambient-rgb', primary.join(','));
+    root.style.setProperty('--ambient-secondary', secondary.join(','));
+  }
+  if (!source) {setColors([112,83,127],[61,80,110]);return;}
+  const img = new Image();
+  if (!source.startsWith('data:') && !source.startsWith('blob:')) img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    try {
+      const c = document.createElement('canvas');c.width=24;c.height=24;
+      const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0,24,24);
+      const px=ctx.getImageData(0,0,24,24).data;
+      let sw=0,r=0,g=0,b=0,bright=[0,0,0],best=-1;
+      for(let i=0;i<px.length;i+=4){
+        if(px[i+3]<180)continue;
+        const R=px[i],G=px[i+1],B=px[i+2],mx=Math.max(R,G,B),mn=Math.min(R,G,B),sat=mx-mn;
+        const weight=.2+sat/255;
+        r+=R*weight;g+=G*weight;b+=B*weight;sw+=weight;
+        const score=sat*(.4+mx/255);
+        if(score>best){best=score;bright=[R,G,B];}
+      }
+      if(!sw)return;
+      const avg=[r/sw,g/sw,b/sw].map(v=>Math.round(Math.max(35,Math.min(225,v))));
+      const accent=best>25?bright:avg;
+      setColors(avg,accent);
+    }catch(e){setColors([112,83,127],[61,80,110]);}
+  };
+  img.onerror=()=>setColors([112,83,127],[61,80,110]);
+  img.src=source;
+}
 </script>
 </body>
 </html>
