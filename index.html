@@ -835,11 +835,11 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div class="form-group">
           <label>Páginas Totales *</label>
-          <input type="number" id="new-book-pages" class="form-control" placeholder="Ej: 194" min="1">
+          <input type="text" id="new-book-pages" class="form-control" placeholder="Ej: 194" min="1" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
         </div>
         <div class="form-group">
           <label>¿En qué pág vas?</label>
-          <input type="number" id="new-book-start-page" class="form-control" placeholder="0" min="0" value="0" oninput="toggleAutoSessionOption()">
+          <input type="text" id="new-book-start-page" class="form-control" placeholder="0" min="0" value="0" oninput="toggleAutoSessionOption()" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
         </div>
       </div>
 
@@ -886,7 +886,7 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
       </p>
       <div class="form-group">
         <label>¿En qué página quedaste?</label>
-        <input type="number" id="session-end-page" class="form-control" placeholder="Número de página">
+        <input type="text" id="session-end-page" class="form-control" placeholder="Número de página" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
       </div>
       <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-end-session')">Seguir Leyendo</button>
@@ -908,11 +908,11 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
       </div>
       <div class="form-group">
         <label>Páginas leídas en ese día *</label>
-        <input type="number" id="hist-session-pages" class="form-control" placeholder="Ej: 14" min="1">
+        <input type="text" id="hist-session-pages" class="form-control" placeholder="Ej: 14" min="1" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
       </div>
       <div class="form-group">
         <label>Minutos leídos (Opcional, déjalo vacío si no lo sabes)</label>
-        <input type="number" id="hist-session-minutes" class="form-control" placeholder="Opcional" min="0">
+        <input type="text" id="hist-session-minutes" class="form-control" placeholder="Opcional" min="0" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
       </div>
       <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-add-historical')">Cancelar</button>
@@ -927,7 +927,7 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
       <h3>Guardar Frase o Nota 📝</h3>
       <div class="form-group" style="margin-top: 12px;">
         <label>Número de Página *</label>
-        <input type="number" id="quote-page" class="form-control" placeholder="Ej: 142">
+        <input type="text" id="quote-page" class="form-control" placeholder="Ej: 142" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
       </div>
       <div class="form-group">
         <label>Frase o Reflexión *</label>
@@ -1373,7 +1373,14 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
       openModal('modal-end-session');
     }
 
+    // Mi Lector 2.3: validación estricta de enteros para los campos de páginas y minutos.
+    function isValidPageInteger(id, allowEmpty = false) {
+      const value = document.getElementById(id).value.trim();
+      return (allowEmpty && value === '') || (/^\d+$/.test(value) && Number.isSafeInteger(Number(value)));
+    }
+
     function confirmEndSession() {
+      if (!isValidPageInteger('session-end-page')) { alert('Ingresa un número de página válido.'); return; }
       const endPage = parseInt(document.getElementById('session-end-page').value, 10);
       const curPage = appState.activeBook.currentPage;
       const totalP = appState.activeBook.totalPages;
@@ -1429,6 +1436,7 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
     }
 
     function saveHistoricalSession() {
+      if (!isValidPageInteger('hist-session-pages') || !isValidPageInteger('hist-session-minutes', true)) { alert('Ingresa cantidades enteras válidas.'); return; }
       const dateVal = document.getElementById('hist-session-date').value;
       const pages = parseInt(document.getElementById('hist-session-pages').value, 10);
       const minsRaw = document.getElementById('hist-session-minutes').value;
@@ -1513,6 +1521,7 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
     }
 
     function saveQuote() {
+      if (!isValidPageInteger('quote-page')) { alert('Ingresa un número de página válido.'); return; }
       const page = parseInt(document.getElementById('quote-page').value, 10);
       const text = document.getElementById('quote-text').value.trim();
       if (!text || isNaN(page)) return;
@@ -1875,6 +1884,7 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
     }
 
     function saveNewBook() {
+      if (!isValidPageInteger('new-book-pages') || !isValidPageInteger('new-book-start-page', true)) { alert('Ingresa cantidades de páginas válidas.'); return; }
       const title = document.getElementById('new-book-title').value.trim();
       const author = document.getElementById('new-book-author').value.trim();
       const pages = parseInt(document.getElementById('new-book-pages').value, 10);
