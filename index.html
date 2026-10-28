@@ -1634,16 +1634,23 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
     }
     function bookScore(book, query, isbn) {
       if (isbn) return book.isbns.includes(isbn) ? 1000 : -100;
-      const q = normalizeBookText(query), t = normalizeBookText(book.title), a = normalizeBookText(book.author);
+      const q = normalizeBookText(query), t = normalizeBookText(book.title);
+      const authorQuery = q.startsWith('autor:') ? q.slice(6).trim() : '';
+      if (authorQuery) return normalizeBookText(book.author).includes(authorQuery) ? 180 : -100;
       if (!q || !t) return -100;
-      let score = t === q ? 160 : t.startsWith(q) ? 110 : t.includes(q) ? 90 : 0;
-      const words = q.split(' ').filter(w => w.length > 2);
-      score += words.filter(w => t.includes(w)).length * 16;
-      if (a.includes(q)) score += 95;
-      if (!score) return -100;
-      if (book.language === 'es' || book.language === 'spa') score += 30;
-      if (book.pages > 0) score += 8;
-      if (book.cover) score += 5;
+      const qWords = q.split(' ').filter(Boolean), tWords = t.split(' ').filter(Boolean);
+      const matched = qWords.filter(w => tWords.includes(w)).length;
+      const coverage = matched / qWords.length;
+      // No confundir obras derivadas con la obra exacta.
+      if (coverage < .85) return -100;
+      const exact = t === q;
+      const prefix = t.startsWith(q + ' ');
+      if (!exact && !prefix && tWords.length > qWords.length + 2) return -100;
+      let score = exact ? 500 : prefix ? 260 : 100 * coverage - 12 * Math.abs(tWords.length-qWords.length);
+      if (book.language === 'es' || book.language === 'spa') score += 110;
+      else if (book.language && book.language !== 'und') score -= 95;
+      if (book.source === 'Google Books') score += 15;
+      if (book.pages > 0) score += 5;
       return score;
     }
     async function getCatalogJson(url) {
@@ -1688,7 +1695,13 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
       try {
         const variants = isISBN ? [`isbn:${isbn}`] : [...new Set([rawQ, normalizeBookText(rawQ)])];
         const requests = [
-          ...variants.map(q => getCatalogJson(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=20&printType=books`).then(data => (data.items || []).map(googleBookRecord))),
+          ...variants.flatMap(q => isISBN ? [
+            getCatalogJson(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=25&printType=books`).then(data => (data.items || []).map(googleBookRecord))
+          ] : [
+            // Primero buscar títulos de ediciones españolas, no obras originales traducidas.
+            getCatalogJson(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent('intitle:'+q)}&maxResults=40&langRestrict=es&printType=books`).then(data => (data.items || []).map(googleBookRecord)),
+            getCatalogJson(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent('intitle:'+q)}&maxResults=25&printType=books`).then(data => (data.items || []).map(googleBookRecord))
+          ]),
           isISBN
             ? getCatalogJson(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`).then(data => {
                 const x = data[`ISBN:${isbn}`];
@@ -1698,11 +1711,15 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
                   year:x.publish_date || '',categories:(x.subjects || []).map(a=>a.name),description:'',
                   language:'',isbns:[isbn],source:'Open Library'}];
               })
-            : getCatalogJson(`https://openlibrary.org/search.json?q=${encodeURIComponent(rawQ)}&limit=25&fields=title,author_name,isbn,cover_i,first_publish_year,number_of_pages_median,language,subject`).then(data => (data.docs || []).map(openLibraryBookRecord))
+            : getCatalogJson(`https://openlibrary.org/search.json?title=${encodeURIComponent(rawQ)}&lang=es&limit=40&fields=title,author_name,isbn,cover_i,first_publish_year,number_of_pages_median,language,subject`).then(data => (data.docs || []).map(openLibraryBookRecord))
         ];
         const settled = await Promise.allSettled(requests);
         if (token !== window.bookSearchToken) return;
         const found = settled.flatMap(x => x.status === 'fulfilled' ? x.value : []);
+        if (!found.length && settled.every(x => x.status === 'rejected')) {
+          status.textContent = 'No se pudo conectar con los catálogos. Revisa tu conexión e inténtalo de nuevo.';
+          return;
+        }
         const unique = new Map();
         found.forEach(book => {
           const score = bookScore(book, rawQ, isISBN ? isbn : '');
@@ -1712,6 +1729,10 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
           if (!prev || score > prev.score || (score === prev.score && book.cover && !prev.cover)) unique.set(key, {...book, score});
         });
         currentSearchResults = [...unique.values()].sort((a,b) => b.score - a.score).slice(0,18);
+        // Evitar presentar resultados en otros idiomas como ediciones españolas.
+        if (!isISBN && currentSearchResults.some(b => b.language === 'es' || b.language === 'spa')) {
+          currentSearchResults.sort((a,b) => ((b.language === 'es'||b.language === 'spa') ? 1:0) - ((a.language === 'es'||a.language === 'spa') ? 1:0) || b.score-a.score);
+        }
         if (!currentSearchResults.length) {
           status.textContent = 'No encontramos una edición confiable. Puedes completar el libro manualmente.';
           return;
@@ -1724,6 +1745,8 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
             <div class="search-result-meta"><div class="search-result-title">${escapeHTML(r.title)}</div>
             <div class="search-result-sub">${escapeHTML(r.author || 'Autor sin confirmar')} · ${escapeHTML(r.source)}${r.year ? ' · '+escapeHTML(r.year) : ''}${r.pages ? ' · '+r.pages+' págs' : ''}</div></div>
           </div>`).join('');
+      } catch (err) {
+        if (token === window.bookSearchToken) status.textContent = 'Error al consultar bibliotecas. Intenta nuevamente.';
       } finally { if (token === window.bookSearchToken) btn.disabled = false; }
     }
 
@@ -2183,7 +2206,7 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
           const seen = new Set();
           const recs = (data.items || []).map(googleBookRecord).filter(b => {
             const title = normalizeBookText(b.title);
-            if (!title || !b.author || !b.cover || owned.has(title) || seen.has(title) || b.language !== 'es') return false;
+            if (!title || !b.author || owned.has(title) || seen.has(title) || b.language !== 'es') return false;
             seen.add(title); return true;
           }).slice(0,5);
           if (recs.length) renderRecCards(recs, targetCat);
@@ -2195,7 +2218,7 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
     }
 
     function renderRecCards(items, cat) {
-      currentRecommendationsList = items.map(b => ({ ...b, category: cat }));
+      currentRecommendationsList = items.map(b => ({ ...b, cover: '', category: cat }));
       const recBox = document.getElementById('recommendations-box');
       recBox.innerHTML = '';
 
@@ -2203,11 +2226,11 @@ body.reading-in-progress .timer-box {border-color:rgba(var(--ambient-rgb),.35);b
         const card = document.createElement('div');
         card.className = 'rec-card';
 
-        if (b.cover) {
-          const img = document.createElement('img');
-          img.src = b.cover;
-          card.appendChild(img);
-        }
+        const coverPlaceholder = document.createElement('div');
+        coverPlaceholder.className = 'search-result-thumb';
+        coverPlaceholder.style.cssText = 'width:44px;height:64px;display:grid;place-items:center;font-size:20px;background:#292a31;border:1px solid #444;border-radius:6px;flex-shrink:0';
+        coverPlaceholder.textContent = '📖';
+        card.appendChild(coverPlaceholder);
 
         const info = document.createElement('div');
         info.className = 'rec-info';
